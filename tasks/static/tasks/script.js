@@ -22,7 +22,8 @@ function startTimer() {
             // If minutes are also 0, stop the timer and alert the user
             if (minutes === 0) {
                 clearInterval(timer);  // Stop the timer
-                alert("Time's up!");  // Notify the user that the time is up
+                playWorkEndAlarm();
+                startBreakTimer();
                 return;
             }
             // Decrement the minutes and reset seconds to 59
@@ -51,3 +52,34 @@ function resetTimer() {
 }
 
 updateDisplay();
+
+
+function startBreakTimer(){
+    minutes = 5;
+    seconds = 0;
+    updateDisplay();
+
+
+    timer = setInterval(()=>{
+        if (seconds=== 0){
+            if (minutes=== 0){
+                clearInterval(timer);
+                playBreakEndAlarm();
+                resetTimer();
+                return;
+            }
+            minutes--;
+            seconds = 59;
+        }else{
+            seconds--;
+
+        }updateDisplay();
+    },1000);
+}
+function playWorkEndAlarm() {
+    document.getElementById("workEndAlarm").play();
+}
+
+function playBreakEndAlarm() {
+    document.getElementById("breakEndAlarm").play();
+}

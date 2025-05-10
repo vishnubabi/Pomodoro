@@ -8,13 +8,13 @@
     
 </head>
 <body>
-    <h1>Pomodoro</h1>
+    <h1>Pomodorooo</h1>
 
     <!-- Timer section that shows minutes and seconds -->
     <div class="timer">
 
         <!-- Timer minute count, starts at 25 minutes -->
-        <span id="minutes">25</span>:<span id="seconds">00</span>
+        <span id="minutes">1</span>:<span id="seconds">00</span>
     </div>
 
     <!-- Buttons to control the timer -->
@@ -29,6 +29,12 @@
         <!-- Button to reset the timer -->
         <button onclick="resetTimer()">Reset</button>
     </div>
-    <script src="{% static 'tasks/script.js' %}"></script>
+    
+    <audio id="workEndAlarm" src="{% static 'tasks/sounds/annoying_alarm_clock.mp3' %}" preload="auto"></audio>
+    <audio id="breakEndAlarm" src="{% static 'tasks/sounds/morning_flower.mp3' %}" preload="auto"></audio>
+
+
+    <script src="{% static 'tasks/script.js' %}" preload = "audio" ></script>
+    
 </body>
 </html>
