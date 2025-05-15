@@ -2,6 +2,34 @@ let minutes = 25;
 let seconds = 0;
 let timer;  // Stores the setInterval reference for clearing the timer
 let isRunning = false;  // Tracks whether the timer is running or paused
+let totalWorkSeconds = 0;
+let totalWorkSecondsToday = 0; // variables to track daily and total time
+let totalWorkSecondsAllTime = 0; //variables to track daily and total time
+
+
+
+if (localStorage.getItem("workTimeToday")) {
+    const storedDate = localStorage.getItem("workTimeDate");
+    const today = new Date().toDateString();
+    if (storedDate === today) {
+        totalWorkSecondsToday = parseInt(localStorage.getItem("workTimeToday"));
+    } else {
+        localStorage.setItem("workTimeDate", today);
+        localStorage.setItem("workTimeToday", "0");
+    }
+}
+
+if (localStorage.getItem("workTimeTotal")) {
+    totalWorkSecondsAllTime = parseInt(localStorage.getItem("workTimeTotal"));
+}
+
+
+
+
+if (localStorage.getItem("workTime")){
+    totalWorkSeconds = parseInt(localStorage.getItem("workTime"));
+    updateWorkTimeDisplay();
+}
 
 // Updates the displayed minutes and seconds on the page
 function updateDisplay() {
@@ -23,6 +51,7 @@ function startTimer() {
             if (minutes === 0) {
                 clearInterval(timer);  // Stop the timer
                 playWorkEndAlarm();
+                addWorkTime(25 * 60);
                 startBreakTimer();
                 return;
             }
@@ -51,7 +80,7 @@ function resetTimer() {
     updateDisplay();  // Update the display to reflect the reset time
 }
 
-updateDisplay();
+
 
 
 function startBreakTimer(){
@@ -83,3 +112,35 @@ function playWorkEndAlarm() {
 function playBreakEndAlarm() {
     document.getElementById("breakEndAlarm").play();
 }
+
+function updateWorkTimeDisplay(){
+    const workMinutes = Math.floor(totalWorkSeconds / 60);
+    const workSeconds = totalWorkSeconds % 60;
+    document.getElementById("work-time").innerText =
+    `Total Work Time Today: ${String(workMinutes).padStart(2, '0')}:${String(workSeconds).padStart(2, '0')}`;
+
+}
+
+function addWorkTime(seconds) {
+    const today = new Date().toDateString();
+    const savedDate = localStorage.getItem("workTimeDate");
+
+    // Reset today’s timer if new day
+    if (today !== savedDate) {
+        totalWorkSecondsToday = 0;
+        localStorage.setItem("workTimeDate", today);
+    }
+
+    // Add to daily and all-time counters
+    totalWorkSecondsToday += seconds;
+    totalWorkSecondsAllTime += seconds;
+
+    // Save to localStorage
+    localStorage.setItem("workTimeToday", totalWorkSecondsToday);
+    localStorage.setItem("workTimeTotal", totalWorkSecondsAllTime);
+
+    updateWorkTimeDisplay(); // Update the on-screen display
+}
+
+
+updateDisplay();
