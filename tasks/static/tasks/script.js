@@ -1,13 +1,18 @@
 let minutes = 25;
 let seconds = 0;
-let timer;  // Stores the setInterval reference for clearing the timer
-let isRunning = false;  // Tracks whether the timer is running or paused
-let totalWorkSeconds = 0;
-let totalWorkSecondsToday = 0; // variables to track daily and total time
-let totalWorkSecondsAllTime = 0; //variables to track daily and total time
+let timer = null;
+let isRunning = false;
+let totalWorkSecondsToday = 0;
+let totalWorkSecondsAllTime = 0;
+let selectedTask = null;
+let tasks = {};
 
+// Load saved tasks from localStorage
+if (localStorage.getItem("tasks")) {
+    tasks = JSON.parse(localStorage.getItem("tasks"));
+}
 
-
+// Load work time (today and all-time) from localStorage
 if (localStorage.getItem("workTimeToday")) {
     const storedDate = localStorage.getItem("workTimeDate");
     const today = new Date().toDateString();
@@ -18,129 +23,167 @@ if (localStorage.getItem("workTimeToday")) {
         localStorage.setItem("workTimeToday", "0");
     }
 }
-
 if (localStorage.getItem("workTimeTotal")) {
     totalWorkSecondsAllTime = parseInt(localStorage.getItem("workTimeTotal"));
 }
 
-
-
-
-if (localStorage.getItem("workTime")){
-    totalWorkSeconds = parseInt(localStorage.getItem("workTime"));
-    updateWorkTimeDisplay();
-}
-
-// Updates the displayed minutes and seconds on the page
+// Update the timer display
 function updateDisplay() {
-    // Format minutes and seconds as two digits and update the display
     document.getElementById("minutes").innerText = String(minutes).padStart(2, '0');
     document.getElementById("seconds").innerText = String(seconds).padStart(2, '0');
 }
 
-// Starts the timer if it is not already running
+// Start the Pomodoro timer
 function startTimer() {
-    if (isRunning) return;  // Prevent starting the timer if it's already running
+    if (isRunning) return;
     isRunning = true;
-
-    // Set an interval to update the timer every second
     timer = setInterval(() => {
-        // If seconds reach 0, we need to handle the minutes decrement
         if (seconds === 0) {
-            // If minutes are also 0, stop the timer and alert the user
             if (minutes === 0) {
-                clearInterval(timer);  // Stop the timer
+                clearInterval(timer);
+                isRunning = false;
                 playWorkEndAlarm();
                 addWorkTime(25 * 60);
+                if (selectedTask) addTaskTime(selectedTask, 25 * 60);
                 startBreakTimer();
                 return;
             }
-            // Decrement the minutes and reset seconds to 59
             minutes--;
             seconds = 59;
         } else {
-            // Decrease the seconds by 1
             seconds--;
         }
-        updateDisplay();  // Update the display after each second
-    }, 1000);  // 1000ms = 1 second
+        updateDisplay();
+    }, 1000);
 }
 
-// Pauses the timer
+// Pause the timer
 function pauseTimer() {
-    clearInterval(timer);  // Stop the interval
-    isRunning = false;  // Set isRunning to false so the timer can be resumed
+    clearInterval(timer);
+    isRunning = false;
 }
 
-// Resets the timer back to 25 minutes and 0 seconds
+// Reset the timer to 25:00
 function resetTimer() {
-    pauseTimer();  // First, pause the timer
-    minutes = 25;  
-    seconds = 0;   
-    updateDisplay();  // Update the display to reflect the reset time
+    pauseTimer();
+    minutes = 25;
+    seconds = 0;
+    updateDisplay();
 }
 
-
-
-
-function startBreakTimer(){
+// Start the break timer (5 minutes)
+function startBreakTimer() {
     minutes = 5;
     seconds = 0;
     updateDisplay();
-
-
-    timer = setInterval(()=>{
-        if (seconds=== 0){
-            if (minutes=== 0){
+    timer = setInterval(() => {
+        if (seconds === 0) {
+            if (minutes === 0) {
                 clearInterval(timer);
+                isRunning = false;
                 playBreakEndAlarm();
                 resetTimer();
                 return;
             }
             minutes--;
             seconds = 59;
-        }else{
+        } else {
             seconds--;
-
-        }updateDisplay();
-    },1000);
+        }
+        updateDisplay();
+    }, 1000);
 }
+
+// Play alarm sound when work ends
 function playWorkEndAlarm() {
     document.getElementById("workEndAlarm").play();
 }
 
+// Play alarm sound when break ends
 function playBreakEndAlarm() {
     document.getElementById("breakEndAlarm").play();
 }
 
-function updateWorkTimeDisplay(){
-    const workMinutes = Math.floor(totalWorkSeconds / 60);
-    const workSeconds = totalWorkSeconds % 60;
+// Update work time display for today and all-time
+function updateWorkTimeDisplay() {
+    const workMinutesToday = Math.floor(totalWorkSecondsToday / 60);
+    const workSecondsToday = totalWorkSecondsToday % 60;
+    const workMinutesTotal = Math.floor(totalWorkSecondsAllTime / 60);
+    const workSecondsTotal = totalWorkSecondsAllTime % 60;
     document.getElementById("work-time").innerText =
-    `Total Work Time Today: ${String(workMinutes).padStart(2, '0')}:${String(workSeconds).padStart(2, '0')}`;
-
+        `Today: ${String(workMinutesToday).padStart(2, '0')}:${String(workSecondsToday).padStart(2, '0')} | 🕓 Total: ${String(workMinutesTotal).padStart(2, '0')}:${String(workSecondsTotal).padStart(2, '0')}`;
 }
 
+// Add work time to daily and all-time counters
 function addWorkTime(seconds) {
     const today = new Date().toDateString();
     const savedDate = localStorage.getItem("workTimeDate");
-
-    // Reset today’s timer if new day
     if (today !== savedDate) {
         totalWorkSecondsToday = 0;
         localStorage.setItem("workTimeDate", today);
     }
-
-    // Add to daily and all-time counters
     totalWorkSecondsToday += seconds;
     totalWorkSecondsAllTime += seconds;
-
-    // Save to localStorage
     localStorage.setItem("workTimeToday", totalWorkSecondsToday);
     localStorage.setItem("workTimeTotal", totalWorkSecondsAllTime);
-
-    updateWorkTimeDisplay(); // Update the on-screen display
+    updateWorkTimeDisplay();
 }
 
+// Add a new task
+function addTask() {
+    const taskInput = document.getElementById("taskInput");
+    const taskName = taskInput.value.trim();
+    if (taskName && !tasks[taskName]) {
+        tasks[taskName] = 0;
+        saveTasks();
+        renderTaskList();
+        renderTaskStats();
+        taskInput.value = '';
+    }
+}
 
+// Render the task dropdown list
+function renderTaskList() {
+    const select = document.getElementById("taskList");
+    select.innerHTML = '<option disabled selected>Select a task</option>';
+    for (let task in tasks) {
+        const option = document.createElement("option");
+        option.value = task;
+        option.textContent = task;
+        select.appendChild(option);
+    }
+}
+
+// Save tasks to localStorage
+function saveTasks() {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+// Render time spent per task
+function renderTaskStats() {
+    const statDiv = document.getElementById("taskStats");
+    statDiv.innerHTML = '<h3>📝 Time Spent Per Task</h3>';
+    for (let task in tasks) {
+        let mins = Math.floor(tasks[task] / 60);
+        let secs = tasks[task] % 60;
+        statDiv.innerHTML += `<p><strong>${task}</strong>: ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}</p>`;
+    }
+}
+
+// Add time to a specific task
+function addTaskTime(task, seconds) {
+    tasks[task] = (tasks[task] || 0) + seconds;
+    saveTasks();
+    renderTaskStats();
+}
+
+// Handle task selection
+document.getElementById("taskList").addEventListener("change", function () {
+    selectedTask = this.value;
+});
+
+// Initial rendering on page load
 updateDisplay();
+updateWorkTimeDisplay();
+renderTaskList();
+renderTaskStats();

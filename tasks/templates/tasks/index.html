@@ -11,8 +11,14 @@
     <h1>Pomodorooo</h1>
 
     <div>
-        <p id="work-time">Total Work Time Today: 00:00</p>
+        <div id="work-time"> Today: 00:00 | 🕓 Total: 00:00</div>
     </div>
+    <input type="text" id="taskInput" placeholder="Enter new task" />
+    <button onclick="addTask()">Add Task</button>
+
+    <select id="taskList">
+    <option disabled selected>Select a task</option>
+    </select>
     
     
 
@@ -21,7 +27,7 @@
     <div class="timer">
 
         <!-- Timer minute count, starts at 25 minutes -->
-        <span id="minutes">1</span>:<span id="seconds">00</span>
+        <span id="minutes">00</span>:<span id="seconds">00</span>
     </div>
 
     <!-- Buttons to control the timer -->
